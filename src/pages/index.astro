@@ -1,0 +1,10 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { Playground } from '../components/playground/Playground';
+---
+
+<Layout>
+  <Playground client:only="react">
+    <p class="px-6 py-8 text-sm text-[#555]">Loading playground…</p>
+  </Playground>
+</Layout>
