@@ -27,7 +27,7 @@ export function PopButton({
         "focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#e0a0a0]",
         "disabled:pointer-events-none disabled:opacity-40",
         sm
-          ? "rounded-lg px-4 py-2 text-xs"
+          ? "rounded-lg px-3.5 py-1.5 text-xs"
           : "rounded-xl px-8 py-5",
         sm
           ? pressed

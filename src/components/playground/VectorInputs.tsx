@@ -24,7 +24,7 @@ function AxisRow({
   const prefix = name.toLowerCase();
   const axes = dim === 3 ? (["x", "y", "z"] as const) : (["x", "y"] as const);
   return (
-    <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-3">
       {axes.map((axis) => (
         <NumberField
           key={axis}

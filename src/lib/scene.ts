@@ -4,7 +4,7 @@ import {
   cross,
   det,
   dot,
-  formatMatLines,
+  formatMat,
   formatVec,
   fmt,
   isParallel,
@@ -92,7 +92,7 @@ export function buildScene(state: PlaygroundState): SceneModel {
   switch (state.op) {
     case "visualize": {
       arrows.push(arrow("a", "A", a, "a"), arrow("b", "B", b, "b"));
-      resultText = `A = ${formatVec(a, dim)}\nB = ${formatVec(b, dim)}`;
+      resultText = `A = ${formatVec(a, dim)}  B = ${formatVec(b, dim)}`;
       if (isZero(a) && isZero(b)) {
         interpretation = "Both vectors sit at the origin — they have no direction yet.";
       } else if (isParallel(a, b) && !isZero(a) && !isZero(b)) {
@@ -321,7 +321,7 @@ export function buildScene(state: PlaygroundState): SceneModel {
         arrow("na", "NA", nA, "b", { dashed: true }),
         arrow("mna", "MNA", pA, "result"),
       );
-      resultText = `M N =\n${formatMatLines(P)}\n(M N) A = ${formatVec(pA, dim)}`;
+      resultText = `M N = ${formatMat(P)}  (M N) A = ${formatVec(pA, dim)}`;
       const dM = det(M);
       const dN = det(N);
       const dP = det(P);

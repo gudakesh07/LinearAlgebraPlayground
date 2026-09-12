@@ -31,7 +31,7 @@ function LabeledSlider({
   onChange: (n: number) => void;
 }) {
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       <div className="flex items-baseline justify-between gap-4">
         <label htmlFor={id} className="text-xs text-[#555]">
           {label}
@@ -84,7 +84,7 @@ export function ScalarControls({
   if (op === "span") {
     return (
       <Section title="Coefficients">
-        <div className="space-y-6">
+        <div className="space-y-3">
           <LabeledSlider
             id="span-s"
             label="s  (weight on A)"

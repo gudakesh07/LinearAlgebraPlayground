@@ -63,7 +63,7 @@ export function NumberField({
           const parsed = parseScalar(raw);
           setRaw(fmt(parsed ?? value));
         }}
-        className="h-9 w-[4.75rem] rounded-none border-[#2a2a2a] bg-black px-2 font-mono text-sm text-[#f0f0f0] shadow-none focus-visible:border-[#e0a0a0] focus-visible:ring-2 focus-visible:ring-[#f9d4d4]/35 dark:bg-black"
+        className="h-10 w-[4.75rem] rounded-none border-[#2a2a2a] bg-black px-3 font-mono text-sm text-[#f0f0f0] shadow-none focus-visible:border-[#e0a0a0] focus-visible:ring-2 focus-visible:ring-[#f9d4d4]/35 dark:bg-black"
       />
     </div>
   );

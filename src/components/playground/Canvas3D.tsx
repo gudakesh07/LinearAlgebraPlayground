@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { mag, vec } from "@/lib/math";
@@ -289,6 +289,7 @@ export function Canvas3D({ model, azimuth, onAzimuthChange }: Canvas3DProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mountRef = useRef<HTMLDivElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
+  const [renderError, setRenderError] = useState<string | null>(null);
   const labelNodes = useRef<Map<string, HTMLDivElement>>(new Map());
   const modelRef = useRef(model);
   const azimuthRef = useRef(azimuth);
@@ -317,147 +318,165 @@ export function Canvas3D({ model, azimuth, onAzimuthChange }: Canvas3DProps) {
     const mount = mountRef.current;
     if (!container || !mount) return;
 
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color(COLORS.bg);
+    let cleanup = () => {};
 
-    const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 200);
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-    renderer.domElement.style.display = "block";
-    renderer.domElement.style.width = "100%";
-    renderer.domElement.style.height = "100%";
-    renderer.domElement.style.touchAction = "none";
-    mount.appendChild(renderer.domElement);
+    try {
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(COLORS.bg);
 
-    const controls = new OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.08;
-    controls.enablePan = false;
-    controls.minDistance = 2;
-    controls.maxDistance = 80;
-    controls.target.set(0, 0, 0);
+      const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 200);
+      const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      renderer.domElement.style.display = "block";
+      renderer.domElement.style.width = "100%";
+      renderer.domElement.style.height = "100%";
+      renderer.domElement.style.touchAction = "none";
+      mount.appendChild(renderer.domElement);
 
-    const content = new THREE.Group();
-    const axes = new THREE.Group();
-    scene.add(content);
-    scene.add(axes);
+      const controls = new OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.08;
+      controls.enablePan = false;
+      controls.minDistance = 2;
+      controls.maxDistance = 80;
+      controls.target.set(0, 0, 0);
 
-    const grid = new THREE.GridHelper(16, 16, 0x333333, 0x1a1a1a);
-    const gridMats = Array.isArray(grid.material) ? grid.material : [grid.material];
-    for (const m of gridMats) {
-      m.transparent = true;
-      m.opacity = 0.45;
-    }
-    scene.add(grid);
+      const content = new THREE.Group();
+      const axes = new THREE.Group();
+      scene.add(content);
+      scene.add(axes);
 
-    const radius = fitRadius(modelRef.current);
-    const phi = Math.PI / 3;
-    const theta = (azimuthRef.current * Math.PI) / 180;
-    camera.position.setFromSpherical(new THREE.Spherical(radius, phi, theta));
-    camera.lookAt(0, 0, 0);
-    controls.update();
-
-    sceneBits.current = { scene, camera, renderer, controls, content, axes };
-    syncScene(content, axes, modelRef.current);
-
-    const setSize = () => {
-      const w = container.clientWidth;
-      const h = container.clientHeight;
-      if (w < 2 || h < 2) return;
-      camera.aspect = w / h;
-      camera.updateProjectionMatrix();
-      renderer.setSize(w, h, false);
-    };
-    setSize();
-    const ro = new ResizeObserver(setSize);
-    ro.observe(container);
-
-    const onStart = () => {
-      draggingRef.current = true;
-    };
-    const onEnd = () => {
-      draggingRef.current = false;
-    };
-    const onChange = () => {
-      if (slidingRef.current) return;
-      onAzimuthRef.current(thetaToDeg(controls.getAzimuthalAngle()));
-    };
-    controls.addEventListener("start", onStart);
-    controls.addEventListener("end", onEnd);
-    controls.addEventListener("change", onChange);
-
-    const scratchTip = new THREE.Vector3();
-    const scratchFrom = new THREE.Vector3();
-
-    const positionLabels = () => {
-      const overlay = overlayRef.current;
-      if (!overlay) return;
-      const w = overlay.clientWidth;
-      const h = overlay.clientHeight;
-      if (w < 2 || h < 2) return;
-
-      for (const label of overlayLabelsRef.current) {
-        const el = labelNodes.current.get(label.id);
-        if (!el) continue;
-
-        const tip = projectToScreen(label.world, camera, w, h, scratchTip);
-        const root = projectToScreen(label.from, camera, w, h, scratchFrom);
-        let dx = tip.x - root.x;
-        let dy = tip.y - root.y;
-        const len = Math.hypot(dx, dy);
-        if (len < 1) {
-          dx = 0;
-          dy = -1;
-        } else {
-          dx /= len;
-          dy /= len;
-        }
-
-        const x = tip.x + dx * LABEL_OFFSET_PX;
-        const y = tip.y + dy * LABEL_OFFSET_PX;
-        const onScreen =
-          tip.visible &&
-          Number.isFinite(x) &&
-          Number.isFinite(y) &&
-          x > -40 &&
-          x < w + 40 &&
-          y > -40 &&
-          y < h + 40;
-
-        if (!onScreen) {
-          el.style.opacity = "0";
-          el.style.visibility = "hidden";
-          el.style.transform = "translate3d(0px, 0px, 0)";
-          continue;
-        }
-
-        el.style.visibility = "visible";
-        el.style.opacity = "1";
-        el.style.transform = `translate3d(${x}px, ${y}px, 0) translate(-50%, -50%)`;
+      const grid = new THREE.GridHelper(16, 16, 0x333333, 0x1a1a1a);
+      const gridMats = Array.isArray(grid.material) ? grid.material : [grid.material];
+      for (const m of gridMats) {
+        m.transparent = true;
+        m.opacity = 0.45;
       }
-    };
+      scene.add(grid);
 
-    let raf = 0;
-    const loop = () => {
+      const radius = fitRadius(modelRef.current);
+      const phi = Math.PI / 3;
+      const theta = (azimuthRef.current * Math.PI) / 180;
+      camera.position.setFromSpherical(new THREE.Spherical(radius, phi, theta));
+      camera.lookAt(0, 0, 0);
       controls.update();
-      renderer.render(scene, camera);
-      positionLabels();
-      raf = requestAnimationFrame(loop);
-    };
-    raf = requestAnimationFrame(loop);
 
-    return () => {
+      sceneBits.current = { scene, camera, renderer, controls, content, axes };
+      syncScene(content, axes, modelRef.current);
+
+      const setSize = () => {
+        const w = container.clientWidth;
+        const h = container.clientHeight;
+        if (w < 2 || h < 2) return;
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
+        renderer.setSize(w, h, false);
+      };
+      setSize();
+      const ro = new ResizeObserver(setSize);
+      ro.observe(container);
+
+      const onStart = () => {
+        draggingRef.current = true;
+      };
+      const onEnd = () => {
+        draggingRef.current = false;
+      };
+      const onChange = () => {
+        if (slidingRef.current) return;
+        onAzimuthRef.current(thetaToDeg(controls.getAzimuthalAngle()));
+      };
+      const onContextLost = (event: Event) => {
+        event.preventDefault();
+        setRenderError("3D view paused because the browser lost its WebGL context.");
+      };
+      controls.addEventListener("start", onStart);
+      controls.addEventListener("end", onEnd);
+      controls.addEventListener("change", onChange);
+      renderer.domElement.addEventListener("webglcontextlost", onContextLost);
+
+      const scratchTip = new THREE.Vector3();
+      const scratchFrom = new THREE.Vector3();
+
+      const positionLabels = () => {
+        const overlay = overlayRef.current;
+        if (!overlay) return;
+        const w = overlay.clientWidth;
+        const h = overlay.clientHeight;
+        if (w < 2 || h < 2) return;
+
+        for (const label of overlayLabelsRef.current) {
+          const el = labelNodes.current.get(label.id);
+          if (!el) continue;
+
+          const tip = projectToScreen(label.world, camera, w, h, scratchTip);
+          const root = projectToScreen(label.from, camera, w, h, scratchFrom);
+          let dx = tip.x - root.x;
+          let dy = tip.y - root.y;
+          const len = Math.hypot(dx, dy);
+          if (len < 1) {
+            dx = 0;
+            dy = -1;
+          } else {
+            dx /= len;
+            dy /= len;
+          }
+
+          const x = Math.min(w - 8, Math.max(8, tip.x + dx * LABEL_OFFSET_PX));
+          const y = Math.min(h - 8, Math.max(8, tip.y + dy * LABEL_OFFSET_PX));
+          const onScreen =
+            tip.visible &&
+            Number.isFinite(tip.x) &&
+            Number.isFinite(tip.y) &&
+            tip.x > -40 &&
+            tip.x < w + 40 &&
+            tip.y > -40 &&
+            tip.y < h + 40;
+
+          if (!onScreen) {
+            el.style.opacity = "0";
+            el.style.visibility = "hidden";
+            el.style.transform = "translate3d(0px, 0px, 0)";
+            continue;
+          }
+
+          el.style.visibility = "visible";
+          el.style.opacity = "1";
+          el.style.transform = `translate3d(${x}px, ${y}px, 0) translate(-50%, -50%)`;
+        }
+      };
+
+      let raf = 0;
+      const loop = () => {
+        controls.update();
+        renderer.render(scene, camera);
+        positionLabels();
+        raf = requestAnimationFrame(loop);
+      };
+      raf = requestAnimationFrame(loop);
+
+      cleanup = () => {
       cancelAnimationFrame(raf);
       ro.disconnect();
       controls.removeEventListener("start", onStart);
       controls.removeEventListener("end", onEnd);
       controls.removeEventListener("change", onChange);
+        renderer.domElement.removeEventListener("webglcontextlost", onContextLost);
       controls.dispose();
       disposeObject(scene);
       renderer.dispose();
       renderer.domElement.remove();
       sceneBits.current = null;
-    };
+      };
+    } catch (error) {
+      console.error("Unable to start 3D view", error);
+      setRenderError(
+        "3D view could not start because WebGL is unavailable in this browser.",
+      );
+      sceneBits.current = null;
+    }
+
+    return () => cleanup();
   }, []);
 
   useEffect(() => {
@@ -481,6 +500,20 @@ export function Canvas3D({ model, azimuth, onAzimuthChange }: Canvas3DProps) {
     controls.update();
     slidingRef.current = false;
   }, [azimuth]);
+
+  if (renderError) {
+    return (
+      <div
+        className="absolute inset-0 flex items-center justify-center px-6 text-center font-mono text-sm leading-relaxed text-[#888]"
+        aria-label="3D view unavailable"
+      >
+        <p>
+          <span className="block text-[#f9d4d4]">3D view unavailable.</span>
+          {renderError}
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div

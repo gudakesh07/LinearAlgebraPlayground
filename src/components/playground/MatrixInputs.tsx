@@ -28,12 +28,12 @@ function MatrixGrid({
     <div className="flex items-center gap-2">
       <span
         aria-hidden="true"
-        className="select-none text-4xl font-light leading-none text-[#555]"
+        className="select-none text-3xl font-light leading-none text-[#555]"
       >
         [
       </span>
       <div
-        className="grid gap-3"
+        className="grid gap-2"
         style={{ gridTemplateColumns: `repeat(${n}, minmax(0, auto))` }}
         role="group"
         aria-label={`Matrix ${name}, ${n} by ${n}`}
@@ -53,7 +53,7 @@ function MatrixGrid({
       </div>
       <span
         aria-hidden="true"
-        className="select-none text-4xl font-light leading-none text-[#555]"
+        className="select-none text-3xl font-light leading-none text-[#555]"
       >
         ]
       </span>
