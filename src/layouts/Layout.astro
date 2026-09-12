@@ -9,7 +9,7 @@ const { title = 'Linear Algebra Playground' } = Astro.props;
 ---
 
 <!doctype html>
-<html lang="en" class="dark">
+<html lang="en" class="dark h-full overflow-hidden">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -28,7 +28,7 @@ const { title = 'Linear Algebra Playground' } = Astro.props;
     <meta name="generator" content={Astro.generator} />
     <title>{title}</title>
   </head>
-  <body class="bg-black text-[#f0f0f0] font-mono antialiased">
+  <body class="h-full overflow-hidden bg-black text-[#f0f0f0] font-mono antialiased">
     <slot />
   </body>
 </html>

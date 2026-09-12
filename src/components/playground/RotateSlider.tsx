@@ -5,7 +5,7 @@ interface RotateSliderProps {
 
 export function RotateSlider({ value, onChange }: RotateSliderProps) {
   return (
-    <div className="mt-4 space-y-2">
+    <div className="mt-4 shrink-0 space-y-2">
       <div className="flex items-baseline justify-between">
         <label htmlFor="orbit-rotate" className="text-[11px] uppercase tracking-[0.22em] text-[#555]">
           Rotate

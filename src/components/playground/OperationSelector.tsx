@@ -58,7 +58,7 @@ export function OperationSelector({
       <div
         role="tablist"
         aria-label="Linear algebra operation"
-        className="flex flex-wrap gap-x-1 gap-y-2"
+        className="flex flex-wrap gap-x-2 gap-y-3"
       >
         {OPERATIONS.map((item) => {
           const disabled = Boolean(item.requires3D && dim === 2);
@@ -81,7 +81,7 @@ export function OperationSelector({
                 onClick={() => onChange(item.id)}
                 onKeyDown={(e) => onKeyDown(e, item.id)}
                 className={[
-                  "border-b-2 px-2.5 py-1.5 font-mono text-xs tracking-wide transition-colors",
+                  "border-b-2 px-2 py-1 font-mono text-xs tracking-wide transition-colors",
                   "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#e0a0a0]",
                   disabled
                     ? "cursor-not-allowed border-transparent text-[#333] opacity-40"
